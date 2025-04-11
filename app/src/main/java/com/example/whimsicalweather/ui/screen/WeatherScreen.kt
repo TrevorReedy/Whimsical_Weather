@@ -2,6 +2,7 @@ package com.example.whimsicalweather.ui.screen
 
 import android.content.res.Resources
 import android.health.connect.datatypes.units.Pressure
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -173,30 +174,32 @@ fun Location(lat: Double, lon: Double,cityName:String?) {
 
 @Composable
 fun WeatherDetails(low: Int?, high: Int?, humidity: Int?, pressure: Int?) {
-    // Handle null values and format the strings
+//    // Handle null values and format the strings
     val lowText = stringResource(
-        id = R.string.high_temp,
-        low ?: 666 // Default to 0 if null
-    )
+        id = R.string.low_temp,
+        low ?: 0 // Default to 0 if null
 
+    )
     val highText = stringResource(
         id = R.string.high_temp,
         high ?: 0 // Default to 0 if null
     )
-
+//
     val humidityText = stringResource(
         id = R.string.humidity,
         humidity ?: 0 // Default to 0 if null
     )
-
+////
     val pressureText = stringResource(
         id = R.string.pressure,
         pressure ?: 0 // Default to 0 if null
     )
+//
+//    // Create a list of details
+//    val details = listOf(lowText, highText, humidityText, pressureText)
 
-    // Create a list of details
+
     val details = listOf(lowText, highText, humidityText, pressureText)
-
     // Display the details
     Column(
         modifier = Modifier

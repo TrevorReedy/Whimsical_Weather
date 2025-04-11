@@ -45,7 +45,7 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
         viewModelScope.launch {
             try {
                 val response = repository.getWeatherData(lat, lon, apiKey)
-                Log.d("WeatherViewModel", "API Response: $response") // Log the response
+                Log.e("WeatherViewModel", "API Response: $response") // Log the response
                 _temperature.value = response.main.temp
                 _cityName.value = response.name
 
@@ -64,8 +64,7 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
 
             } catch (e: Exception) {
                 // Handle error (e.g., show a message)
-                _temperature.value = 6.9
-                _cityName.value = ""
+                Log.e("WeatherViewModel", "Error fetching weather data: ${e.message}")
             }
         }
     }

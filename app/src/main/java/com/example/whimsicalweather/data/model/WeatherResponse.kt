@@ -6,13 +6,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class WeatherResponse(
-    val coord: Coordinates,
+    val coord: Coord,
     val weather: List<Weather>,
     val main: Main,
     val name: String // City name
 ) {
     @Serializable
-    data class Coordinates(
+    data class Coord(
         val lon: Double,
         val lat: Double
     )
