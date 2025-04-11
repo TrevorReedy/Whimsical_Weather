@@ -1,21 +1,21 @@
 <resources>
-    <string name="app_name">Wonderful Weather</string>
+    <string name="app_name">Whimsical Weather</string>
     <string name="weather_icon_desc">Weather Icon</string>
 
     <!-- Header -->
-    <string name="header_title">Wonderful Weather</string>
+    <string name="header_title">Whimsical Weather</string>
 
     <!-- City Name -->
     <string name="city_name">St. Paul, MN</string>
 
     <!-- Temperature Display -->
-    <string name="temp_value">72°</string>
-    <string name="feels_like">Feels Like: 68°</string>
+    <string name="temp_value">%d°</string>
+    <string name="feels_like">Feels Like: %d°</string>
 
     <!-- Weather Details -->
-    <string name="low_temp">Low: 65°</string>
-    <string name="high_temp">High: 78°</string>
-    <string name="humidity">Humidity: 100%</string>
-    <string name="pressure">Pressure: 1023 hPa</string>
+    <string name="low_temp">Low: %d</string>
+    <string name="high_temp">High: %d°</string>
+    <string name="humidity">Humidity: %d%%</string>
+    <string name="pressure">Pressure: %d hPa</string>
 
 </resources>
