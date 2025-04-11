@@ -1,3 +1,5 @@
+// Top of build.gradle.kts
+import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,10 +7,19 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+val apiKey = localProperties.getProperty("MY_API_KEY") ?: ""
 android {
     namespace = "com.example.whimsicalweather"
     compileSdk = 35
-
+    buildFeatures {
+        buildConfig = true
+    }
     defaultConfig {
         applicationId = "com.example.whimsicalweather"
         minSdk = 24
@@ -17,7 +28,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "API_KEY", "\"$apiKey\"")
     }
+
 
     buildTypes {
         release {

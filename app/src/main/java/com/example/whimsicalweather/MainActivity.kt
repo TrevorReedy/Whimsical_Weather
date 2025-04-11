@@ -21,8 +21,7 @@ class MainActivity : ComponentActivity() {
         // Hardcoded latitude and longitude (replace with actual values)
         val lat =  44.95 // Example: St Paul
         val lon = 93.09 // Example: St Paul
-//      val apiKey : String = BuildConfig.WEATHER_API_KEY //REPLACE WITH YOUR API KEY AS A STRING
-        val apiKey = "061dcf52b110f6739037bf2bf8f472e7"
+        val apiKey : String = BuildConfig.API_KEY //REPLACE WITH YOUR API KEY AS A STRING "YOUR_API_KEY"
         // Fetch weather data
         viewModel.fetchWeather(lat, lon, apiKey)
 
