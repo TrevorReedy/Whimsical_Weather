@@ -18,4 +18,8 @@
     <string name="humidity">Humidity: %d%%</string>
     <string name="pressure">Pressure: %d hPa</string>
 
+    <!-- Weather Details -->
+    <string name="time">%02d:%02d</string>
+    <string name="date">%s | %s %d</string>
+
 </resources>
