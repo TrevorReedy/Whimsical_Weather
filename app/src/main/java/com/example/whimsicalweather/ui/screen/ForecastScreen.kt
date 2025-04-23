@@ -24,12 +24,14 @@ import com.example.whimsicalweather.data.model.DailyForecast
 import com.example.whimsicalweather.ui.viewmodel.ForecastViewModel
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 @Composable
 fun ForecastScreen(viewModel: ForecastViewModel, onBackClick: () -> Unit) {
     val forecastData = viewModel.forecast.observeAsState()
     val iconCode = viewModel.icon.observeAsState()
     val cityName by viewModel.cityName.observeAsState()
+    val cityNameText = cityName ?: stringResource(id = R.string.null_label)
 
     Box(
         modifier = Modifier
@@ -43,10 +45,10 @@ fun ForecastScreen(viewModel: ForecastViewModel, onBackClick: () -> Unit) {
             ) {
                 Spacer(modifier = Modifier.width(8.dp)
                     .height(16.dp))
-                Text("Back")
+                Text(stringResource(id = R.string.back))
             }
                 Text(
-                    text = "7-Day Forecast: ${cityName}",
+                    text = stringResource(id = R.string.forecast_header, cityNameText),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -61,7 +63,7 @@ fun ForecastScreen(viewModel: ForecastViewModel, onBackClick: () -> Unit) {
                     }
                 }
             }
-        } ?: Text("Loading...", color = Color.White)
+        } ?: Text(text = stringResource(id = R.string.loading), color = Color.White)
     }
 }
 
@@ -92,14 +94,15 @@ fun ForecastItem(day: DailyForecast) {
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = day.weather.firstOrNull()?.description?.replaceFirstChar { it.uppercase() } ?: "No description",
+                text = day.weather.firstOrNull()?.description?.replaceFirstChar { it.uppercase() } ?: stringResource(id = R.string.null_label),
                 fontSize = 18.sp,
                 color = Color.LightGray.copy(alpha = 0.5f),
 
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = "High: ${day.temp.max}°  Low: ${day.temp.min}°",
+//                text = "High: ${day.temp.max.roundToInt()}°  Low: ${day.temp.min.roundToInt()}°",
+                text = stringResource(id = R.string.high_low_desc, day.temp.max.roundToInt(), day.temp.min.roundToInt()),
                 fontSize = 16.sp,
                 color = Color.White
             )

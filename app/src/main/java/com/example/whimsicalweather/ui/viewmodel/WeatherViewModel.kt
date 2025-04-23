@@ -1,6 +1,8 @@
 package com.example.whimsicalweather.ui.viewmodel
 
 import android.util.Log
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -43,12 +45,17 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
     private val _icon = MutableLiveData<String>()
     val icon: LiveData<String> get() = _icon
 
+    private val _zipError = MutableLiveData<String?>()
+    val zipError: LiveData<String?> get() = _zipError
+
+    private val _zipCode = mutableStateOf("")
+    val zipCode: State<String> get() = _zipCode
 
     fun fetchWeather(lat: Double, lon: Double, apiKey: String) {
         viewModelScope.launch {
             try {
                 val response = repository.getWeatherData(lat, lon, apiKey)
-                Log.e("WeatherViewModel", "API Response: $response") // Log the response
+                Log.e("WeatherViewModel", "API Response: $response")
                 _temperature.value = response.main.temp
                 _cityName.value = response.name
 
@@ -66,8 +73,9 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
 
 
 
+
+
             } catch (e: Exception) {
-                // Handle error (e.g., show a message)
                 Log.e("WeatherViewModel", "Error fetching weather data: ${e.message}")
             }
         }
@@ -75,10 +83,13 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
 
     fun fetchWeatherByZip(zipCode: String, apiKey: String) {
         viewModelScope.launch {
+            _zipError.value = null
             try {
                 val response = repository.getWeatherByZip(zipCode, apiKey)
 
-                // Update all LiveData as you do in fetchWeather()
+
+
+
                 _temperature.value = response.main.temp
                 _cityName.value = response.name
                 _lat.value = response.coord.lat
@@ -92,9 +103,16 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
 
             } catch (e: Exception) {
                 Log.e("WeatherViewModel", "Error fetching by zip: ${e.message}")
-                // optional: show error LiveData or callback
+                _zipError.value = "Invalid zip code or network error."
             }
         }
     }
 
-}
+    fun clearZipError() {
+            _zipError.value = null
+        }
+    fun updateZip(newZip: String) {
+        _zipCode.value = newZip
+    }
+    }
+

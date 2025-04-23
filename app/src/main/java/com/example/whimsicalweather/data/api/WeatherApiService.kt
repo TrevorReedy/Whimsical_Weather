@@ -21,12 +21,12 @@ interface WeatherApiService {
     ): WeatherResponse
 
 
-    @GET("forecast/daily")
+    @GET("forecast/daily?cnt=16")
     suspend fun getForecastData(
         @Query("zip") zipCode: String,
         @Query("appid") apiKey: String,
         @Query("units") units: String = "imperial",
-        @Query("cnt") days: Int = 7 // how many days of forecast you want (e.g., 7, 10, 16)
+        @Query("cnt") days: Int = 16
     ): ForecastResponse
 
 }

@@ -3,6 +3,7 @@ package com.example.whimsicalweather.ui.screen
 import android.content.res.Resources
 import android.health.connect.datatypes.units.Pressure
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,12 +22,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -50,85 +55,84 @@ import com.example.whimsicalweather.ui.viewmodel.WeatherViewModel import org.int
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.KeyboardType
-
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import kotlin.math.roundToInt
 
 
-//clock functionallity
+
 
 import java.util.Calendar
 
 
 
 @Composable
-fun WeatherScreen(viewModel: WeatherViewModel,
-                  innerPadding: PaddingValues = PaddingValues(),
-                  onForecastClick: () -> Unit,
-                  onZipSearch: (String) -> Unit) {
-    // Observe weather data from the ViewModel
-    val temperature by viewModel.temperature.observeAsState()
-    val cityName by viewModel.cityName.observeAsState()
-    val lon by viewModel.lon.observeAsState()
-    val lat by viewModel.lat.observeAsState()
+fun WeatherScreen(
+    viewModel: WeatherViewModel,
+    innerPadding: PaddingValues = PaddingValues(),
+    onForecastClick: () -> Unit,
+    onZipSearch: (String) -> Unit
+) {
+    val zipError by viewModel.zipError.observeAsState()
+    val context = LocalContext.current
 
-    val tempMin by viewModel.tempMin.observeAsState()
-    val tempMax by viewModel.tempMax.observeAsState()
-
-
-    val humidity by viewModel.humidity.observeAsState()
-    val pressure by viewModel.pressure.observeAsState()
-
-    val feelsLike by viewModel.feelsLike.observeAsState()
-
-    val iconCode by viewModel.icon.observeAsState("01d")
-
-    var zipCode by remember { mutableStateOf("") }
-
-
-
-    // Apply padding and display the UI
-    Box(
-        modifier = Modifier
-            .fillMaxSize(),
-
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    WindowInsets.statusBars.asPaddingValues() // handles notch, camera, etc
-                )
-                .padding(innerPadding),
-            verticalArrangement = Arrangement.SpaceBetween
+    Scaffold(
+        containerColor = Color.Transparent
+    ) { scaffoldPadding ->
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
-            Spacer(modifier = Modifier.height(2.dp))
-            Clock()
-            ZipCodeField(
-                zipCode = zipCode,
-                onZipChange = { zipCode = it },
-                onSubmit = {
-                    if (zipCode.length == 5) {
-                        onZipSearch(zipCode)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(WindowInsets.statusBars.asPaddingValues())
+                    .padding(innerPadding)
+                    .padding(scaffoldPadding),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Clock()
+                ZipCodeField(
+                    zipCode = viewModel.zipCode.value,
+                    onZipChange = { viewModel.updateZip(it) },
+                    onSubmit = {
+                        if (viewModel.zipCode.value.length == 5) {
+                            onZipSearch(viewModel.zipCode.value)
+                        }
                     }
-                }
-            )
-
-            DisplayWidget(
-                temperature = temperature?.roundToInt(),
-                cityName,
-                feelsLike?.roundToInt(),
-                tempMin?.roundToInt(),
-                tempMax?.roundToInt(),
-                humidity,
-                pressure,
-                iconCode ?: "01d",
-                onForecastClick
-
                 )
+                DisplayWidget(
+                    temperature = viewModel.temperature.value?.roundToInt(),
+                    cityName = viewModel.cityName.value,
+                    feelsLike = viewModel.feelsLike.value?.roundToInt(),
+                    tempMin = viewModel.tempMin.value?.roundToInt(),
+                    tempMax = viewModel.tempMax.value?.roundToInt(),
+                    humidity = viewModel.humidity.value,
+                    pressure = viewModel.pressure.value,
+                    iconCode = viewModel.icon.value ?: "01d",
+                    onForecastClick = onForecastClick
+                )
+            }
+
+            // ✅ Show error popup if zip is invalid
+            if (!zipError.isNullOrBlank()) {
+                AlertDialog(
+                    onDismissRequest = { viewModel.clearZipError() },
+                    confirmButton = {
+                        TextButton(onClick = { viewModel.clearZipError() }) {
+                            Text("OK")
+                        }
+                    },
+                    title = { Text("Zip Code Error") },
+                    text = { Text(zipError ?: "") }
+                )
+            }
         }
     }
 }
-
 
 
 
@@ -141,12 +145,12 @@ fun Clock() {
 
     val unformattedMonth = calendar.get(Calendar.MONTH)
     val month = listOf(
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
+        stringResource(id = R.string.month_january),stringResource(id = R.string.month_february) ,stringResource(id = R.string.month_march) , stringResource(id = R.string.month_april), stringResource(id = R.string.month_may), stringResource(id = R.string.month_june),
+            stringResource(id = R.string.month_july), stringResource(id = R.string.month_august), stringResource(id = R.string.month_september), stringResource(id = R.string.month_october), stringResource(id = R.string.month_september), stringResource(id = R.string.month_october), stringResource(id = R.string.month_november), stringResource(id = R.string.month_december)
     )[unformattedMonth]
 
     val dayOfWeek = listOf(
-        "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+        stringResource(id = R.string.day_sunday), stringResource(id = R.string.day_monday), stringResource(id = R.string.day_tuesday), stringResource(id = R.string.day_wednesday), stringResource(id = R.string.day_thursday), stringResource(id = R.string.day_friday), stringResource(id = R.string.day_saturday)
     )[calendar.get(Calendar.DAY_OF_WEEK) - 1]
 
     val day = calendar.get(Calendar.DAY_OF_MONTH)
@@ -185,6 +189,8 @@ fun ZipCodeField(
     onZipChange: (String) -> Unit,
     onSubmit: () -> Unit
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -198,26 +204,44 @@ fun ZipCodeField(
                     onZipChange(it)
                 }
             },
-            placeholder = { Text("Enter Zip Code") },
+            placeholder = { Text(stringResource(R.string.zip_input_placeholder)) },
             singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    if (zipCode.length == 5) {
+                        keyboardController?.hide()
+                        onSubmit()
+                    }
+                }
+            ),
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(
-            onClick = { onSubmit() },
+            onClick = {
+                if (zipCode.length == 5) {
+                    keyboardController?.hide()
+                    onSubmit()
+                }
+            },
             enabled = zipCode.length == 5,
+
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF2D9CDB),
+                containerColor = Color.DarkGray.copy(alpha = 0.7f),
                 contentColor = Color.White
-            )
-        ) {
-            Text("Search")
+            )){
+            Text(stringResource(R.string.zip_search_button_txt))
         }
     }
 }
+
+
 
 
 
@@ -317,7 +341,7 @@ fun WeatherDetails(
     val humidityText = stringResource(id = R.string.humidity, humidity ?: 0)
     val temperatureText = stringResource(id = R.string.temp_value, temperature ?: 0)
     val feelsLikeText = stringResource(id = R.string.feels_like, feelsLike ?: 0)
-    val cityName =  (CityName ?: "----")
+    val cityName =  (CityName ?: stringResource(id = R.string.null_label))
 
     val details = listOf(feelsLikeText, highText, lowText, humidityText)
 
@@ -393,11 +417,12 @@ fun WeatherDetails(
                     onClick = { onForecastClick() },
                     modifier = Modifier
                         .padding(16.dp),
+
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.DarkGray.copy(alpha = 0.7f),       // Background color
+                        containerColor = Color.DarkGray.copy(alpha = 0.7f),
                         contentColor = Color.White
                 )) {
-                    Text(text = "View Forecast")
+                    Text(text = stringResource(id = R.string.view_forecast))
                 }
             }
         }
