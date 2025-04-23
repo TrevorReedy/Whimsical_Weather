@@ -13,4 +13,9 @@ class WeatherRepository(private val weatherApiService: WeatherApiService) {
     suspend fun getForecast(zipCode: String, apiKey: String, days: Int = 7): ForecastResponse {
         return weatherApiService.getForecastData(zipCode, apiKey, days = days)
     }
+
+    suspend fun getWeatherByZip(zipCode: String, apiKey: String): WeatherResponse {
+        return weatherApiService.getWeatherByZip(zipCode, apiKey)
+    }
+
 }

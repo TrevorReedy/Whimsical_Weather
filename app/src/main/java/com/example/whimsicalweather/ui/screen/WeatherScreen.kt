@@ -21,12 +21,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,8 +46,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.whimsicalweather.R
-import com.example.whimsicalweather.ui.viewmodel.WeatherViewModel
-import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
+import com.example.whimsicalweather.ui.viewmodel.WeatherViewModel import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.KeyboardType
 
 import kotlin.math.roundToInt
 
@@ -56,7 +63,8 @@ import java.util.Calendar
 @Composable
 fun WeatherScreen(viewModel: WeatherViewModel,
                   innerPadding: PaddingValues = PaddingValues(),
-                  onForecastClick: () -> Unit) {
+                  onForecastClick: () -> Unit,
+                  onZipSearch: (String) -> Unit) {
     // Observe weather data from the ViewModel
     val temperature by viewModel.temperature.observeAsState()
     val cityName by viewModel.cityName.observeAsState()
@@ -72,6 +80,9 @@ fun WeatherScreen(viewModel: WeatherViewModel,
 
     val feelsLike by viewModel.feelsLike.observeAsState()
 
+    val iconCode by viewModel.icon.observeAsState("01d")
+
+    var zipCode by remember { mutableStateOf("") }
 
 
 
@@ -90,8 +101,17 @@ fun WeatherScreen(viewModel: WeatherViewModel,
                 .padding(innerPadding),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(2.dp))
             Clock()
+            ZipCodeField(
+                zipCode = zipCode,
+                onZipChange = { zipCode = it },
+                onSubmit = {
+                    if (zipCode.length == 5) {
+                        onZipSearch(zipCode)
+                    }
+                }
+            )
 
             DisplayWidget(
                 temperature = temperature?.roundToInt(),
@@ -101,12 +121,16 @@ fun WeatherScreen(viewModel: WeatherViewModel,
                 tempMax?.roundToInt(),
                 humidity,
                 pressure,
+                iconCode ?: "01d",
                 onForecastClick
 
                 )
         }
     }
 }
+
+
+
 
 @Composable
 fun Clock() {
@@ -134,83 +158,67 @@ fun Clock() {
         Text(
             text = stringResource(id = R.string.time, hour, minute),
             style = TextStyle(
-                fontSize = 80.sp,
+                fontSize = 90.sp,
                 color = Color.White,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold
             )
         )
         Text(
             text = stringResource(id = R.string.date, dayOfWeek, month, day),
             style = TextStyle(
-                fontSize = 25.sp,
+                fontSize = 32.sp,
                 color = Color.White,
-                textAlign = TextAlign.Center
-            )
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.SemiBold
+                )
         )
+
     }
 }
 
 
 
-//@Composable
-//fun Clock(
-//){
-//    val calendar = Calendar.getInstance()
-//
-//    val hour = calendar.get(Calendar.HOUR_OF_DAY)
-//    val minute = calendar.get(Calendar.MINUTE)
-//    val second = calendar.get(Calendar.SECOND)
-//
-//
-//    val unformatedMonth = calendar.get(Calendar.MONTH)
-//    val monthsList = listOf("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
-//    val month = monthsList[unformatedMonth]
-//
-//
-//    val unformatedDay = calendar.get(Calendar.DAY_OF_WEEK)
-//    val dayOfWeekList = listOf("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
-//    val dayOfWeek = dayOfWeekList[unformatedDay - 1]
-//
-//    val day = calendar.get(Calendar.DAY_OF_MONTH)
-//    Column (
-//
-//    ) {
-//
-//        Row(
-//            modifier = Modifier
-//                .fillMaxWidth(),
-//
-//            horizontalArrangement = Arrangement.Center
-//        ) {
-//            Text(
-//                text = stringResource(id = R.string.time, hour, minute),
-//                modifier = Modifier,
-//                style = TextStyle(
-//                    fontSize = 80.sp,
-//                    color = Color.White,
-//                    textAlign = TextAlign.Center
-//
-//                )
-//            )
-//        }
-//        }
-//
-//        Row(
-//            modifier = Modifier.fillMaxWidth(),
-//            horizontalArrangement = Arrangement.Center // Center the child horizontally
-//        ) {
-//
-//                Text(
-//                    text = stringResource(id = R.string.date, dayOfWeek, month, day),
-//                    style = TextStyle(
-//                        fontSize = 25.sp,
-//                        color = Color.White,
-//                        textAlign = TextAlign.Center
-//
-//                    )
-//                )
-//            }
-//        }
+@Composable
+fun ZipCodeField(
+    zipCode: String,
+    onZipChange: (String) -> Unit,
+    onSubmit: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        TextField(
+            value = zipCode,
+            onValueChange = {
+                if (it.length <= 5 && it.all { char -> char.isDigit() }) {
+                    onZipChange(it)
+                }
+            },
+            placeholder = { Text("Enter Zip Code") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = { onSubmit() },
+            enabled = zipCode.length == 5,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF2D9CDB),
+                contentColor = Color.White
+            )
+        ) {
+            Text("Search")
+        }
+    }
+}
+
 
 
 @Composable
@@ -221,6 +229,7 @@ fun DisplayWidget(temperature: Int?,
                   tempMax: Int?,
                   humidity:Int?,
                   pressure:Int?,
+                  iconCode: String,
                   onForecastClick: () -> Unit
 ) {
 
@@ -235,7 +244,7 @@ fun DisplayWidget(temperature: Int?,
             verticalAlignment = Alignment.CenterVertically
         )
         {}
-        WeatherDetails(temperature, tempMin, tempMax, humidity, feelsLike, cityName,onForecastClick)
+        WeatherDetails(temperature, tempMin, tempMax, humidity, feelsLike, cityName, iconCode , onForecastClick)
     }
 }
 
@@ -257,22 +266,41 @@ fun TempDisplay(temperature: String) {
     }
 }
 
-//@Composable
-//fun Location(lat: Double, lon: Double,cityName:String?) {
-//    Row {
-//        Text(
-//            text = stringResource(id = R.string.city_name, cityName ?: "----"),
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(15.dp),
-//            style = TextStyle(
-//                textAlign = TextAlign.Center,
-//                color = Color.White,
-//                fontSize = 24.sp
-//            )
-//        )
-//    }
-//}
+@Composable
+fun getWeatherBackground(iconCode: String): Int {
+    return when (iconCode) {
+        "01d" -> R.drawable.lofi_day
+        "01n" -> R.drawable.lofi_night
+        "02d", "03d",  "04d" -> R.drawable.lofi_cloudy_day
+        "02n", "03n", "04n" -> R.drawable.lofi_cloudy_night
+
+        "09d", "10d"  -> R.drawable.lofi_rainy_day
+        "09n", "10n" -> R.drawable.lofi_rain_night
+        "11d", "11n" -> R.drawable.lofi_thunderstorm
+        "13d", "13n" -> R.drawable.lofi_snow
+        "50d" -> R.drawable.lofi_mist_day
+        "50n" -> R.drawable.lofi_mist_night
+        else -> R.drawable.lofi_day
+    }
+}
+
+@Composable
+fun getIcon(iconCode: String): Int {
+    return when (iconCode) {
+        "01d" -> R.drawable.sun
+        "01n" -> R.drawable.moon
+        "02d", "03d",  "04d" -> R.drawable.cloudy_day
+        "02n", "03n", "04n" -> R.drawable.cloudy_night
+
+        "09d", "10d"  -> R.drawable.rain_day
+        "09n", "10n" -> R.drawable.rainy_night
+        "11d", "11n" -> R.drawable.thunderstorm
+        "13d", "13n" -> R.drawable.snow
+        "50d",  "50n"  -> R.drawable.mist
+
+        else -> R.drawable.sun
+    }
+}
 @Composable
 fun WeatherDetails(
     temperature: Int?,
@@ -281,6 +309,7 @@ fun WeatherDetails(
     humidity: Int?,
     feelsLike: Int?,
     CityName: String?,
+    iconCode: String,
     onForecastClick: () -> Unit
 ) {
     val lowText = stringResource(id = R.string.low_temp, low ?: 0)
@@ -288,7 +317,7 @@ fun WeatherDetails(
     val humidityText = stringResource(id = R.string.humidity, humidity ?: 0)
     val temperatureText = stringResource(id = R.string.temp_value, temperature ?: 0)
     val feelsLikeText = stringResource(id = R.string.feels_like, feelsLike ?: 0)
-    val cityName = stringResource(id = R.string.city_name, CityName ?: "----")
+    val cityName =  (CityName ?: "----")
 
     val details = listOf(feelsLikeText, highText, lowText, humidityText)
 
@@ -297,7 +326,8 @@ fun WeatherDetails(
             .fillMaxWidth()
             .padding(16.dp)
             .background(
-                color = Color.Gray.copy(alpha = 0.6f),
+//                color = Color.Gray.copy(alpha = 0.6f),
+                color = Color(0x001E1E1E),
                 shape = RoundedCornerShape(12.dp)
             )
             .padding(16.dp)
@@ -352,7 +382,7 @@ fun WeatherDetails(
 
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.sun),
+                    painter = painterResource(id = getIcon(iconCode)),
                     contentDescription = stringResource(id = R.string.weather_icon_desc),
                     modifier = Modifier
                         .size(100.dp)
@@ -363,7 +393,10 @@ fun WeatherDetails(
                     onClick = { onForecastClick() },
                     modifier = Modifier
                         .padding(16.dp),
-                ) {
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.DarkGray.copy(alpha = 0.7f),       // Background color
+                        contentColor = Color.White
+                )) {
                     Text(text = "View Forecast")
                 }
             }
@@ -372,102 +405,3 @@ fun WeatherDetails(
 }
 
 
-//@Composable
-//fun WeatherDetails(temperature: Int?,low: Int?, high: Int?, humidity: Int?, feelsLike: Int?) {
-////    // Handle null values and format the strings
-//    val lowText = stringResource(
-//        id = R.string.low_temp,
-//        low ?: 0 // Default to 0 if null
-//
-//    )
-//    val highText = stringResource(
-//        id = R.string.high_temp,
-//        high ?: 0 // Default to 0 if null
-//    )
-////
-//    val humidityText = stringResource(
-//        id = R.string.humidity,
-//        humidity ?: 0 // Default to 0 if null
-//    )
-//////
-//    val temperatureText = stringResource(
-//        id = R.string.temp_value,
-//        temperature ?: 0 // Default to 0 if null
-//    )
-//    val feelsLikeText = stringResource(
-//        id =  R.string.feels_like,
-//        feelsLike ?: 0)
-////
-////    // Create a list of details
-////    val details = listOf(lowText, highText, humidityText, pressureText)
-//
-//
-//    val details = listOf(feelsLikeText, highText,lowText, humidityText)
-//    // Display the details
-//    Row(
-//        modifier = Modifier.fillMaxWidth()
-//            .fillMaxHeight()
-//    ) {
-//        Box(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(16.dp)
-//                .background(
-//                    color = Color.Gray.copy(alpha = 0.6f), // 60% opacity
-//                    shape = RoundedCornerShape(12.dp)      // Optional rounded corners
-//                )
-//                .padding(16.dp) // inner padding
-//        ) {
-//            Column(
-//                modifier = Modifier
-//                    .weight(1f)
-//                    .fillMaxHeight()
-//                    .padding(20.dp),
-////            horizontalAlignment = Alignment.CenterHorizontally,
-//
-//                verticalArrangement = Arrangement.Center
-//            ) {
-//
-//                Text(
-//                    text = temperatureText,
-//                    modifier = Modifier.fillMaxWidth(),
-//                    style = TextStyle(
-//                        fontSize = 50.sp,
-//                        color = Color.White,
-//                        fontWeight = FontWeight.Bold
-//                    )
-//
-//                )
-//
-//
-//
-//                details.forEach { detail ->
-//                    Text(
-//                        text = detail,
-//                        modifier = Modifier.fillMaxWidth(),
-//                        style = TextStyle(
-//                            fontSize = 18.sp,
-//                            color = Color.White,
-//
-//                            )
-//                    )
-//                }
-//            }
-//            Column(
-//                modifier = Modifier
-//                    .weight(1f),
-//                horizontalAlignment = Alignment.CenterHorizontally,
-//                verticalArrangement = Arrangement.Bottom
-//
-//            ) {
-//                Image(
-//                    painter = painterResource(id = R.drawable.sun),
-//                    contentDescription = stringResource(id = R.string.weather_icon_desc),
-//                    modifier = Modifier.fillMaxSize(),
-//
-//                    )
-//            }
-//        }
-//
-//    }
-//}

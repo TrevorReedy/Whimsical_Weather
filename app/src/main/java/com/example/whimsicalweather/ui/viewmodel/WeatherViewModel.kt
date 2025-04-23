@@ -40,6 +40,9 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
     private val _feelsLike = MutableLiveData<Double>()
     val feelsLike: LiveData<Double> get() = _feelsLike
 
+    private val _icon = MutableLiveData<String>()
+    val icon: LiveData<String> get() = _icon
+
 
     fun fetchWeather(lat: Double, lon: Double, apiKey: String) {
         viewModelScope.launch {
@@ -59,6 +62,7 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
                 _pressure.value = response.main.pressure
 
                 _feelsLike.value = response.main.feelsLike
+                _icon.value = response.weather[0].icon
 
 
 
@@ -68,4 +72,29 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
             }
         }
     }
+
+    fun fetchWeatherByZip(zipCode: String, apiKey: String) {
+        viewModelScope.launch {
+            try {
+                val response = repository.getWeatherByZip(zipCode, apiKey)
+
+                // Update all LiveData as you do in fetchWeather()
+                _temperature.value = response.main.temp
+                _cityName.value = response.name
+                _lat.value = response.coord.lat
+                _lon.value = response.coord.lon
+                _tempMin.value = response.main.tempMin
+                _tempMax.value = response.main.tempMax
+                _humidity.value = response.main.humidity
+                _pressure.value = response.main.pressure
+                _feelsLike.value = response.main.feelsLike
+                _icon.value = response.weather.firstOrNull()?.icon ?: "01d"
+
+            } catch (e: Exception) {
+                Log.e("WeatherViewModel", "Error fetching by zip: ${e.message}")
+                // optional: show error LiveData or callback
+            }
+        }
+    }
+
 }

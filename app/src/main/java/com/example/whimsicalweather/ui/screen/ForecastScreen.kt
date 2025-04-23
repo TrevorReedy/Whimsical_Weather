@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,11 +28,12 @@ import java.util.*
 @Composable
 fun ForecastScreen(viewModel: ForecastViewModel, onBackClick: () -> Unit) {
     val forecastData = viewModel.forecast.observeAsState()
+    val iconCode = viewModel.icon.observeAsState()
+    val cityName by viewModel.cityName.observeAsState()
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
             .padding(16.dp)
     ) {
         forecastData.value?.let { forecast ->
@@ -39,10 +41,12 @@ fun ForecastScreen(viewModel: ForecastViewModel, onBackClick: () -> Unit) {
                 onClick = { onBackClick() },
                 modifier = Modifier.padding(bottom = 16.dp)
             ) {
+                Spacer(modifier = Modifier.width(8.dp)
+                    .height(16.dp))
                 Text("Back")
             }
                 Text(
-                    text = "7-Day Forecast: ${forecast.city.name}",
+                    text = "7-Day Forecast: ${cityName}",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -61,29 +65,58 @@ fun ForecastScreen(viewModel: ForecastViewModel, onBackClick: () -> Unit) {
     }
 }
 
+
+
+
+
 @Composable
 fun ForecastItem(day: DailyForecast) {
     val date = SimpleDateFormat("EEE, MMM d", Locale.getDefault()).format(Date(day.dt * 1000))
+    val iconCode = day.weather.firstOrNull()?.icon ?: "01d"
+    val iconRes = getIcon(iconCode)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.DarkGray.copy(alpha = 0.5f))
+            .background(Color.DarkGray.copy(alpha = 0.7f))
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = date, fontSize = 18.sp, color = Color.White, fontWeight = FontWeight.Medium)
-            Text(text = "${day.weather.firstOrNull()?.description ?: "No description"}", color = Color.White)
-            Text(text = "High: ${day.temp.max}°  Low: ${day.temp.min}°", color = Color.White)
+            Text(
+                text = date,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                letterSpacing = 0.5.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = day.weather.firstOrNull()?.description?.replaceFirstChar { it.uppercase() } ?: "No description",
+                fontSize = 18.sp,
+                color = Color.LightGray.copy(alpha = 0.5f),
+
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "High: ${day.temp.max}°  Low: ${day.temp.min}°",
+                fontSize = 16.sp,
+                color = Color.White
+            )
         }
 
-        // Optional: Display weather icon based on `day.weather.first().icon`
         Image(
-            painter = painterResource(id = R.drawable.sun), // Replace this with dynamic icons later
+            painter = painterResource(id = iconRes),
             contentDescription = null,
-            modifier = Modifier.size(48.dp),
+            modifier = Modifier
+                .size(48.dp)
+                .padding(start = 12.dp),
             contentScale = ContentScale.Fit
         )
     }
 }
+
+
+
+
+

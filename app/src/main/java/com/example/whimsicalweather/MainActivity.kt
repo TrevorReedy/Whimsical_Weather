@@ -21,10 +21,13 @@ import com.example.whimsicalweather.ui.screen.WeatherScreen
 import com.example.whimsicalweather.ui.viewmodel.WeatherViewModel
 import com.example.whimsicalweather.ui.theme.WhimsicalWeatherTheme
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.example.whimsicalweather.ui.screen.ForecastScreen
+import com.example.whimsicalweather.ui.screen.getIcon
+import com.example.whimsicalweather.ui.screen.getWeatherBackground
 import com.example.whimsicalweather.ui.viewmodel.ForecastViewModel
 
 class MainActivity : ComponentActivity() {
@@ -39,18 +42,40 @@ class MainActivity : ComponentActivity() {
         // Hardcoded latitude and longitude (replace with actual values)
         val lat = 44.95 // Example: St Paul
         val lon = -93.09 // Example: St Paul
+
+
+
         val apiKey: String =
             BuildConfig.API_KEY //REPLACE WITH YOUR API KEY AS A STRING => "YOUR_API_KEY"
         // Fetch weather data
         weatherViewModel.fetchWeather(lat, lon, apiKey)
 
+
+
+
         setContent {
             var showForecast by remember { mutableStateOf(false) }
+            var currentZip by remember { mutableStateOf("55101") } // start with a default
+
+//            for icon codes and for images
+            val iconCode by weatherViewModel.icon.observeAsState("01d")
+
+            val backGround = getWeatherBackground(iconCode)
+
 
             WhimsicalWeatherTheme {
                 if (showForecast) {
-                    ForecastScreen(viewModel = forecastViewModel,
-                        onBackClick = { showForecast = false })
+                    Box(modifier = Modifier.fillMaxSize()) {
+
+                        Image(
+                            painter = painterResource(id = backGround),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                        ForecastScreen(viewModel = forecastViewModel,
+                            onBackClick = { showForecast = false })
+                    }
                 } else {
                     Surface(
                         modifier = Modifier
@@ -58,8 +83,9 @@ class MainActivity : ComponentActivity() {
                         color = Color.Green
                     ) {
                         Box(modifier = Modifier.fillMaxSize()) {
+
                             Image(
-                                painter = painterResource(id = R.drawable.thunderstorm),
+                                painter = painterResource(id = backGround),
                                 contentDescription = null,
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
@@ -70,11 +96,17 @@ class MainActivity : ComponentActivity() {
                                 viewModel = weatherViewModel,
                                 onForecastClick = {
                                     forecastViewModel.fetchForecast(
-                                        "55101",
+                                        currentZip,
                                         BuildConfig.API_KEY
                                     ) // TODO: replace with real zip
                                     showForecast = true
+                                },
+                                onZipSearch = { zip ->
+                                    currentZip = zip
+                                    weatherViewModel.fetchWeatherByZip(zip, BuildConfig.API_KEY)
+                                    forecastViewModel.fetchForecast(zip, BuildConfig.API_KEY)
                                 }
+
                             )
 
                         }

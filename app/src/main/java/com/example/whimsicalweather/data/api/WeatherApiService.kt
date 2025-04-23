@@ -13,6 +13,14 @@ interface WeatherApiService {
         @Query("units") units: String = "imperial" // Optional: Units (metric, imperial, etc.)
     ): WeatherResponse
 
+    @GET("weather")
+    suspend fun getWeatherByZip(
+        @Query("zip") zipCode: String,
+        @Query("appid") apiKey: String,
+        @Query("units") units: String = "imperial"
+    ): WeatherResponse
+
+
     @GET("forecast/daily")
     suspend fun getForecastData(
         @Query("zip") zipCode: String,
