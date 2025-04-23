@@ -1,4 +1,6 @@
 <resources>
+    <string name="null_label">N/A</string>
+
     <string name="app_name">Whimsical Weather</string>
     <string name="weather_icon_desc">Weather Icon</string>
 
@@ -7,6 +9,10 @@
 
     <!-- City Name -->
     <string name="city_name">St. Paul, MN</string>
+
+    <!-- Clock Component -->
+    <string name="zip_search_button_txt">Search</string>
+    <string name="zip_input_placeholder">Enter Zip Code</string>
 
     <!-- Temperature Display -->
     <string name="temp_value">%d°</string>
@@ -17,5 +23,40 @@
     <string name="high_temp">High: %d°</string>
     <string name="humidity">Humidity: %d%%</string>
     <string name="pressure">Pressure: %d hPa</string>
+    <string name="view_forecast">View Forecast</string>
+
+    <!-- Weather Details -->
+    <string name="time">%02d:%02d</string>
+    <string name="date">%s | %s %d</string>
+
+<!--Forecast Strings-->
+    <string name="back">back</string>
+    <string name="forecast_header">7-Day Forecast %s</string>
+    <string name="loading">loading</string>
+    <!--Item Description-->
+    <string name="high_low_desc">High: %d°  Low: %d°</string>
+
+    <string name="month_january">January</string>
+    <string name="month_february">February</string>
+    <string name="month_march">March</string>
+    <string name="month_april">April</string>
+    <string name="month_may">May</string>
+    <string name="month_june">June</string>
+    <string name="month_july">July</string>
+    <string name="month_august">August</string>
+    <string name="month_september">September</string>
+    <string name="month_october">October</string>
+    <string name="month_november">November</string>
+    <string name="month_december">December</string>
+
+    <string name="day_monday">Monday</string>
+    <string name="day_tuesday">Tuesday</string>
+    <string name="day_wednesday">Wednesday</string>
+    <string name="day_thursday">Thursday</string>
+    <string name="day_friday">Friday</string>
+    <string name="day_saturday">Saturday</string>
+    <string name="day_sunday">Sunday</string>
+
+
 
 </resources>
