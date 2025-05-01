@@ -21,12 +21,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -60,12 +63,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import java.util.Calendar
 import kotlin.math.roundToInt
 
-
-
-
-import java.util.Calendar
 
 
 
@@ -74,11 +74,25 @@ fun WeatherScreen(
     viewModel: WeatherViewModel,
     innerPadding: PaddingValues = PaddingValues(),
     onForecastClick: () -> Unit,
-    onZipSearch: (String) -> Unit
+    onZipSearch: (String) -> Unit,
+    onRequestLocation: () -> Unit
 ) {
+
+    val temperature by viewModel.temperature.observeAsState()
+    val cityName by viewModel.cityName.observeAsState()
+    val feelsLike by viewModel.feelsLike.observeAsState()
+    val tempMin by viewModel.tempMin.observeAsState()
+    val tempMax by viewModel.tempMax.observeAsState()
+    val humidity by viewModel.humidity.observeAsState()
+    val iconCode by viewModel.icon.observeAsState("01d")  // provide a default
     val zipError by viewModel.zipError.observeAsState()
+    val zipCode by viewModel.zipCode
     val context = LocalContext.current
 
+
+    LaunchedEffect(cityName) {
+        Log.d("WeatherScreen", "RECOMPOSE with city = $cityName")
+    }
     Scaffold(
         containerColor = Color.Transparent
     ) { scaffoldPadding ->
@@ -93,31 +107,108 @@ fun WeatherScreen(
                     .padding(scaffoldPadding),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Clock()
-                ZipCodeField(
-                    zipCode = viewModel.zipCode.value,
-                    onZipChange = { viewModel.updateZip(it) },
-                    onSubmit = {
-                        if (viewModel.zipCode.value.length == 5) {
-                            onZipSearch(viewModel.zipCode.value)
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Clock()
+                }
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        val keyboardController = LocalSoftwareKeyboardController.current
+
+                        TextField(
+                            value = zipCode,
+                            onValueChange = {
+                                if (it.length <= 5 && it.all { char -> char.isDigit() }) {
+                                    viewModel.updateZip(it)
+                                }
+                            },
+                            placeholder = { Text(stringResource(R.string.zip_input_placeholder)) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    keyboardController?.hide()
+                                    if (viewModel.zipCode.value.length == 5) {
+                                        onZipSearch(viewModel.zipCode.value)
+                                    }
+                                }
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Box(modifier = Modifier
+                            .size(48.dp)
+                            .background(Color.Transparent)) {
+                            IconButton(
+                                onClick = {
+                                    Log.d("WeatherScreen", "Location icon clicked")
+                                    keyboardController?.hide()
+                                    onRequestLocation()
+                                },
+                                modifier = Modifier
+                                    .fillMaxSize()
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_my_location),
+                                    contentDescription = stringResource(R.string.my_location_desc),
+                                    tint = Color.White
+                                )
+                            }
                         }
                     }
-                )
-                DisplayWidget(
-                    temperature = viewModel.temperature.value?.roundToInt(),
-                    cityName = viewModel.cityName.value,
-                    feelsLike = viewModel.feelsLike.value?.roundToInt(),
-                    tempMin = viewModel.tempMin.value?.roundToInt(),
-                    tempMax = viewModel.tempMax.value?.roundToInt(),
-                    humidity = viewModel.humidity.value,
-                    pressure = viewModel.pressure.value,
-                    iconCode = viewModel.icon.value ?: "01d",
+
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val keyboardController = LocalSoftwareKeyboardController.current
+                    Button(
+                        onClick = {
+                            if (viewModel.zipCode.value.length == 5) {
+                                onZipSearch(viewModel.zipCode.value)
+                                keyboardController?.hide()
+                            }
+                        },
+                        enabled = viewModel.zipCode.value.length == 5,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.DarkGray.copy(alpha = 0.7f),
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text(stringResource(R.string.zip_search_button_txt))
+                    }
+                }
+
+
+                WeatherDetails(
+                    temperature = temperature?.roundToInt() ?: 0,
+                    low = tempMin?.roundToInt() ?: 0,
+                    high = tempMax?.roundToInt() ?: 0,
+                    humidity = humidity ?: 0,
+                    feelsLike = feelsLike?.roundToInt() ?: 0,
+                    CityName = cityName ?: "Loading...",
+                    iconCode = iconCode,
                     onForecastClick = onForecastClick
                 )
             }
 
-            // ✅ Show error popup if zip is invalid
+            // Error popup if zip is invalid
             if (!zipError.isNullOrBlank()) {
                 AlertDialog(
                     onDismissRequest = { viewModel.clearZipError() },
@@ -135,7 +226,6 @@ fun WeatherScreen(
 }
 
 
-
 @Composable
 fun Clock() {
     val calendar = Calendar.getInstance()
@@ -145,12 +235,19 @@ fun Clock() {
 
     val unformattedMonth = calendar.get(Calendar.MONTH)
     val month = listOf(
-        stringResource(id = R.string.month_january),stringResource(id = R.string.month_february) ,stringResource(id = R.string.month_march) , stringResource(id = R.string.month_april), stringResource(id = R.string.month_may), stringResource(id = R.string.month_june),
-            stringResource(id = R.string.month_july), stringResource(id = R.string.month_august), stringResource(id = R.string.month_september), stringResource(id = R.string.month_october), stringResource(id = R.string.month_september), stringResource(id = R.string.month_october), stringResource(id = R.string.month_november), stringResource(id = R.string.month_december)
+        stringResource(id = R.string.month_january), stringResource(id = R.string.month_february),
+        stringResource(id = R.string.month_march), stringResource(id = R.string.month_april),
+        stringResource(id = R.string.month_may), stringResource(id = R.string.month_june),
+        stringResource(id = R.string.month_july), stringResource(id = R.string.month_august),
+        stringResource(id = R.string.month_september), stringResource(id = R.string.month_october),
+        stringResource(id = R.string.month_november), stringResource(id = R.string.month_december)
     )[unformattedMonth]
 
     val dayOfWeek = listOf(
-        stringResource(id = R.string.day_sunday), stringResource(id = R.string.day_monday), stringResource(id = R.string.day_tuesday), stringResource(id = R.string.day_wednesday), stringResource(id = R.string.day_thursday), stringResource(id = R.string.day_friday), stringResource(id = R.string.day_saturday)
+        stringResource(id = R.string.day_sunday), stringResource(id = R.string.day_monday),
+        stringResource(id = R.string.day_tuesday), stringResource(id = R.string.day_wednesday),
+        stringResource(id = R.string.day_thursday), stringResource(id = R.string.day_friday),
+        stringResource(id = R.string.day_saturday)
     )[calendar.get(Calendar.DAY_OF_WEEK) - 1]
 
     val day = calendar.get(Calendar.DAY_OF_MONTH)
@@ -175,156 +272,11 @@ fun Clock() {
                 color = Color.White,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.SemiBold
-                )
-        )
-
-    }
-}
-
-
-
-@Composable
-fun ZipCodeField(
-    zipCode: String,
-    onZipChange: (String) -> Unit,
-    onSubmit: () -> Unit
-) {
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        TextField(
-            value = zipCode,
-            onValueChange = {
-                if (it.length <= 5 && it.all { char -> char.isDigit() }) {
-                    onZipChange(it)
-                }
-            },
-            placeholder = { Text(stringResource(R.string.zip_input_placeholder)) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    if (zipCode.length == 5) {
-                        keyboardController?.hide()
-                        onSubmit()
-                    }
-                }
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(
-            onClick = {
-                if (zipCode.length == 5) {
-                    keyboardController?.hide()
-                    onSubmit()
-                }
-            },
-            enabled = zipCode.length == 5,
-
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.DarkGray.copy(alpha = 0.7f),
-                contentColor = Color.White
-            )){
-            Text(stringResource(R.string.zip_search_button_txt))
-        }
-    }
-}
-
-
-
-
-
-@Composable
-fun DisplayWidget(temperature: Int?,
-                  cityName: String?,
-                  feelsLike: Int?,
-                  tempMin: Int?,
-                  tempMax: Int?,
-                  humidity:Int?,
-                  pressure:Int?,
-                  iconCode: String,
-                  onForecastClick: () -> Unit
-) {
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-//        Location(lat =  34.17, lon =  -115.13, )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
-        )
-        {}
-        WeatherDetails(temperature, tempMin, tempMax, humidity, feelsLike, cityName, iconCode , onForecastClick)
-    }
-}
-
-@Composable
-fun TempDisplay(temperature: String) {
-    Column(
-        modifier = Modifier
-            .height(100.dp)
-            .fillMaxWidth(0.33f),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = temperature,
-            style = TextStyle(
-                fontSize = 70.sp
             )
         )
     }
 }
 
-@Composable
-fun getWeatherBackground(iconCode: String): Int {
-    return when (iconCode) {
-        "01d" -> R.drawable.lofi_day
-        "01n" -> R.drawable.lofi_night
-        "02d", "03d",  "04d" -> R.drawable.lofi_cloudy_day
-        "02n", "03n", "04n" -> R.drawable.lofi_cloudy_night
-
-        "09d", "10d"  -> R.drawable.lofi_rainy_day
-        "09n", "10n" -> R.drawable.lofi_rain_night
-        "11d", "11n" -> R.drawable.lofi_thunderstorm
-        "13d", "13n" -> R.drawable.lofi_snow
-        "50d" -> R.drawable.lofi_mist_day
-        "50n" -> R.drawable.lofi_mist_night
-        else -> R.drawable.lofi_day
-    }
-}
-
-@Composable
-fun getIcon(iconCode: String): Int {
-    return when (iconCode) {
-        "01d" -> R.drawable.sun
-        "01n" -> R.drawable.moon
-        "02d", "03d",  "04d" -> R.drawable.cloudy_day
-        "02n", "03n", "04n" -> R.drawable.cloudy_night
-
-        "09d", "10d"  -> R.drawable.rain_day
-        "09n", "10n" -> R.drawable.rainy_night
-        "11d", "11n" -> R.drawable.thunderstorm
-        "13d", "13n" -> R.drawable.snow
-        "50d",  "50n"  -> R.drawable.mist
-
-        else -> R.drawable.sun
-    }
-}
 @Composable
 fun WeatherDetails(
     temperature: Int?,
@@ -341,7 +293,7 @@ fun WeatherDetails(
     val humidityText = stringResource(id = R.string.humidity, humidity ?: 0)
     val temperatureText = stringResource(id = R.string.temp_value, temperature ?: 0)
     val feelsLikeText = stringResource(id = R.string.feels_like, feelsLike ?: 0)
-    val cityName =  (CityName ?: stringResource(id = R.string.null_label))
+    val cityName = (CityName ?: stringResource(id = R.string.null_label))
 
     val details = listOf(feelsLikeText, highText, lowText, humidityText)
 
@@ -350,18 +302,15 @@ fun WeatherDetails(
             .fillMaxWidth()
             .padding(16.dp)
             .background(
-//                color = Color.Gray.copy(alpha = 0.6f),
                 color = Color(0x001E1E1E),
                 shape = RoundedCornerShape(12.dp)
             )
             .padding(16.dp)
     ) {
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center
@@ -403,7 +352,6 @@ fun WeatherDetails(
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
-
             ) {
                 Image(
                     painter = painterResource(id = getIcon(iconCode)),
@@ -415,13 +363,12 @@ fun WeatherDetails(
                 )
                 Button(
                     onClick = { onForecastClick() },
-                    modifier = Modifier
-                        .padding(16.dp),
-
+                    modifier = Modifier.padding(16.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.DarkGray.copy(alpha = 0.7f),
                         contentColor = Color.White
-                )) {
+                    )
+                ) {
                     Text(text = stringResource(id = R.string.view_forecast))
                 }
             }
@@ -429,4 +376,38 @@ fun WeatherDetails(
     }
 }
 
+@Composable
+fun getWeatherBackground(iconCode: String): Int {
+    return when (iconCode) {
+        "01d" -> R.drawable.lofi_day
+        "01n" -> R.drawable.lofi_night
+        "02d", "03d",  "04d" -> R.drawable.lofi_cloudy_day
+        "02n", "03n", "04n" -> R.drawable.lofi_cloudy_night
 
+        "09d", "10d"  -> R.drawable.lofi_rainy_day
+        "09n", "10n" -> R.drawable.lofi_rain_night
+        "11d", "11n" -> R.drawable.lofi_thunderstorm
+        "13d", "13n" -> R.drawable.lofi_snow
+        "50d" -> R.drawable.lofi_mist_day
+        "50n" -> R.drawable.lofi_mist_night
+        else -> R.drawable.lofi_day
+    }
+}
+
+@Composable
+fun getIcon(iconCode: String): Int {
+    return when (iconCode) {
+        "01d" -> R.drawable.sun
+        "01n" -> R.drawable.moon
+        "02d", "03d",  "04d" -> R.drawable.cloudy_day
+        "02n", "03n", "04n" -> R.drawable.cloudy_night
+
+        "09d", "10d"  -> R.drawable.rain_day
+        "09n", "10n" -> R.drawable.rainy_night
+        "11d", "11n" -> R.drawable.thunderstorm
+        "13d", "13n" -> R.drawable.snow
+        "50d",  "50n"  -> R.drawable.mist
+
+        else -> R.drawable.sun
+    }
+}

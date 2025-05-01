@@ -9,6 +9,9 @@ lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.0"
 composeBom = "2024.04.01"
 material3 = "1.2.1"
+play-services-location = "21.2.0"
+lifecycle = "2.7.0"
+
 
 #testing
 compose = "1.5.1"
@@ -23,6 +26,8 @@ retrofit-kotlinx-serialization = "1.0.0"
 okhttp = "4.12.0"
 coroutines = "1.7.3"
 runtimeLivedata = "1.7.8"
+lifecycleService = "2.8.7"
+appcompat = "1.7.0"
 
 
 
@@ -53,14 +58,15 @@ androidx-navigation = { group = "androidx.navigation", name = "navigation-compos
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 
-
-#test area
 #testing
 compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "compose" }
 compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "compose" }
 compose-material = { group = "androidx.compose.material", name = "material", version.ref = "compose" }
 activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
+androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycle" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

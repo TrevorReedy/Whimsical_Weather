@@ -58,5 +58,14 @@
     <string name="day_sunday">Sunday</string>
 
 
+    <string name="notification_channel_name">Weather Updates</string>
+    <string name="notification_channel_description">Channel for weather notifications</string>
+    <string name="location_permission_rationale">Location access is needed to show weather for your current position</string>
+
+
+    <string name="getting_location">Getting your location...</string>
+    <string name="location_permission_denied">Location permission denied - using default location</string>
+    <string name="notification_title">Weather Update</string>
+    <string name="my_location_desc">Get weather for current location</string>
 
 </resources>
